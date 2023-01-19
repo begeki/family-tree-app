@@ -9,6 +9,7 @@ import cv2
 import math
 import mediapipe as mp
 import numpy as np
+import os
 from   PIL import Image, ImageDraw
 import streamlit as st
 
@@ -206,6 +207,7 @@ def rotate_image_by_angle(image, angle):
     # rotated_image = np.asarray(rotated_image)
 
     # Save the PIL image locally
+    os.makedirs('data/.temp', exist_ok=True)
     rotated_image.convert('RGB').save('data/.temp/_.jpeg')
 
     # Reload the image using cv2

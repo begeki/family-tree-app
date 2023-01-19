@@ -1,4 +1,4 @@
-import streamlit as st
+import os
 
 from helpers import *
 
@@ -79,14 +79,17 @@ else:
     st.image(Image.fromarray(framed_img_arr), caption=f'{PORTRAIT_STYLE} framed in {FRAME_SHAPE}', width=300)
 
     # Option to download image
+    os.makedirs('data/processed_images', exist_ok=True)
     final_img = Image.fromarray(framed_img_arr)
-    final_img.save('data/processed_images/xxxx.png')
-    with open('data/processed_images/xxxx.png', "rb") as file:
+    basename = os.path.basename(RAW_IMAGE_FILEPATH.name)
+    filename, extension = os.path.splitext(basename)
+    final_img.save(f'data/processed_images/{filename}_framed.png')
+    with open(f'data/processed_images/{filename}_framed.png', "rb") as file:
         button = st.download_button(
             label     =  'Download framed image',
             data      =   file,
             mime      =  'image/png',
-            file_name = f'{PORTRAIT_STYLE}_{FRAME_SHAPE}.png',
+            file_name = f'{filename}_framed.png',
         )
 
     # Warn user if there are 'null' values in the framed image
