@@ -9,8 +9,7 @@ with st.sidebar:
     # Image
     RAW_IMAGE_FILEPATH = st.file_uploader('Upload a photo of a single face', type=None, accept_multiple_files=False)
 
-    #with st.container:
-
+    st.header('Frame parameters:')
     col1, col2, col3 = st.columns([4, 3, 3])
 
     with col1:
@@ -40,7 +39,6 @@ else:
     image = np.asarray(image)
     image = image.copy()
     swap_R_and_B(image)
-
 
     # Extract the face landmarks (face mesh)
     face_landmarks = extract_face_landmarks(image)
@@ -73,6 +71,7 @@ else:
     # TODO: fill/blur around the edge of the image. This is important for when the mask is applied and 'null' space is left uncovered.
 
     # Frame the image: apply a mask and crop
+    # TODO: when frame parameters are changed, only run script from here - the facemesh does not need to be recalculated.
     framed_img_arr = frame_head(image, r, (cx, cy, cz), FRAME_SHAPE, PORTRAIT_STYLE, EXPAND)
 
     # Show framed image on app
