@@ -35,12 +35,20 @@ if RAW_IMAGE_FILEPATH is None:
 
 else:
 
-    # TODO: reorganise to have raw_image > face_mesh > rotated_image > centre of head. And then have the final image underneath.
+    # TODO: if input image has been processed, it does not need to be re-processed whenever frame parameters are
+    #  changed. Ensure that col1, col2, col3, etc. can still be populated, despite these processes running within
+    #  a decorated function.
+    # @st.cache
+    # def process_input_image(image):
+    #     # run all processes up to (but not including) when image is framed
+    #     return image, r, (cx, cy, cz)
+
+    # Sequence of images showing how calculations/processing progresses
     col1, col2, col3, col4, col5, col6, col7 = st.columns([5,1,5,1,5,1,5])
 
     image = Image.open(RAW_IMAGE_FILEPATH)
     with col1:
-        st.image(image, caption=f'Input')#, width=300)
+        st.image(image, caption=f'Input')
 
     with col2:
         st.text('>')
@@ -55,7 +63,7 @@ else:
 
     with col3:
         with st.spinner(text="Detecting face..."):
-            # TODO: change image to greyscale, and make facemesh more prominent (green?)
+            # TODO: change image to greyscale
             show_mesh(image, face_landmarks)
     with col4:
         st.text('>')
@@ -74,7 +82,7 @@ else:
     face_landmarks = extract_face_landmarks(image)
     with col5:
         with st.spinner(text="Leveling face..."):
-            # TODO: show image of rotated image
+            # TODO: change image to greyscale
             show_mesh(image, face_landmarks)
             pass
     with col6:
@@ -92,16 +100,12 @@ else:
 
     with col7:
         with st.spinner(text="Inferring centre of head..."):
-            # TODO: add image of centre of head's location
+            # TODO: change image to greyscale
             #img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             img = image.copy()
             swap_R_and_B(img)
             img = Image.fromarray(img)
-            #image = Image.new('RGBA', (200, 200))
             draw = ImageDraw.Draw(img)
-            #draw.ellipse((cx - r, cy - r, cx + r, cy + r), fill=None, outline='#00ff00', width=10)
-            #draw.line([(cx-r/5, cy-r/5), (cx+r/5, cy+r/5)], fill='#00ff00', width=10)
-            #draw.line([(cx-r/5, cy+r/5), (cx+r/5, cy-r/5)], fill='#00ff00', width=10)
             draw.rectangle((cx - r, cy - r, cx + r, cy + r), fill=None, outline='#00ff00', width=10)
             draw.line([(cx, cy-r/5), (cx, cy+r/5)], fill='#00ff00', width=10)
             draw.line([(cx-r/5, cy), (cx+r/5, cy)], fill='#00ff00', width=10)
@@ -109,20 +113,17 @@ else:
             draw.line([(cx-r, cy+r/3), (cx+r, cy+r/3)], fill='#00ff00', width=2)
             draw.line([(cx-r/3, cy-r), (cx-r/3, cy+r)], fill='#00ff00', width=2)
             draw.line([(cx+r/3, cy-r), (cx+r/3, cy+r)], fill='#00ff00', width=2)
-            st.image(img, caption=f'Head centre')  # , width=300)
+            st.image(img, caption=f'Head centre')
             pass
 
     # TODO: fill/blur around the edge of the image. This is important for when
     #  the mask is applied and 'null' space is left uncovered.
 
     # Frame the image: apply a mask and crop
-    # TODO: when frame parameters are changed, only run script from here - the
-    #  facemesh does not need to be recalculated. For further details, see:
-    #  https://docs.streamlit.io/library/api-reference/performance
     framed_img_arr = frame_head(image, r, (cx, cy, cz), FRAME_SHAPE, PORTRAIT_STYLE, EXPAND)
 
     # Show framed image on app
-    st.success('Subject has successfully detected!')
+    st.success('Subject has been successfully detected!')
     st.image(Image.fromarray(framed_img_arr), caption=f'{PORTRAIT_STYLE} framed in {FRAME_SHAPE}', width=300)
 
     # Option to download image
@@ -149,10 +150,8 @@ else:
                 break
     if null_pixels_flag is True:
         st.warning("""
-        :warning: Frame includes 'null' pixels. You may want to:\n * make the \
+        :warning: Frame includes 'null' pixels (i.e., pixels that were off \
+        the edge of the original image). You may want to:\n * make the \
         frame smaller using the options in the sidebar\n * use a different \
         photo where the face is not so close to the edge
         """)
-
-
-    # TODO: change colours of landmarks: https://stackoverflow.com/questions/71860084/how-can-i-change-the-color-of-the-lip-that-got-its-landmarks-without-disturbing
