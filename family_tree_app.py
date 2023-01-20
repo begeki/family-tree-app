@@ -12,25 +12,6 @@ with st.sidebar:
     # TODO: upload image from camera.
     RAW_IMAGE_FILEPATH = st.file_uploader('Upload a photo of a single face', type=None, accept_multiple_files=False)
 
-    # st.header('Frame parameters:')
-    # col1, col2, col3 = st.columns([4, 3, 3])
-    #
-    # with col1:
-    #     # Size of frame
-    #     EXPAND = st.number_input('Size', min_value=0.5, max_value=2.5, value=1.0, step=0.1, format='%.1f')
-    #
-    # with col2:
-    #     # Shape of frame
-    #     FRAME_SHAPE = st.radio('Frame shape', ['circle', 'oval'], index=0)
-    #
-    # with col3:
-    #     # Style of frame
-    #     PORTRAIT_STYLE = st.radio('Portrait style', ['face', 'bust'], index=0)
-
-    # # Show workings/intermediate steps
-    # SHOW_WORKINGS = st.checkbox('Show workings?')
-
-
 if RAW_IMAGE_FILEPATH is None:
     st.info(':information_source: Upload a photo containing a single face using the sidebar.')
 
@@ -60,51 +41,59 @@ else:
     image = image.copy()
     swap_R_and_B(image)
 
-    # Extract the face landmarks (face mesh)
-    face_landmarks = extract_face_landmarks(image)
-
     with col3:
         with st.spinner(text="Detecting face..."):
-            # TODO: change image to greyscale
+
+            # Extract the face landmarks (face mesh)
+            face_landmarks = extract_face_landmarks(image)
+
+            # Overlay facemesh on top of image
             detected_face_image = apply_facemesh(image, face_landmarks)
+
+            # Display image on app
             st.image(detected_face_image, caption=f'Face detected')
+
     with col4:
         st.text('>')
 
-    # Calculate by how much the face is tilted (leaning left/right).
-    # This will determine by how much to correct the image in order
-    # to make the face level.
-    facial_tilt = calculate_facial_tilt(image, face_landmarks)
-    # st.metric('Tilt', f'{facial_tilt:.0f}°')
-
-    # Rotate image to make eyes level.
-    image = rotate_image_by_angle(image, facial_tilt)
-
-    # Re-extract the face landmarks (face mesh) now that the image has been
-    # corrected to make eyes level.
-    face_landmarks = extract_face_landmarks(image)
     with col5:
         with st.spinner(text="Leveling face..."):
-            # TODO: change image to greyscale
+
+            # Calculate by how much the face is tilted (leaning left/right).
+            # This will determine by how much to correct the image in order
+            # to make the face level.
+            facial_tilt = calculate_facial_tilt(image, face_landmarks)
+            # st.metric('Tilt', f'{facial_tilt:.0f}°')
+
+            # Rotate image to make eyes level.
+            image = rotate_image_by_angle(image, facial_tilt)
+
+            # Re-extract the face landmarks (face mesh) now that the image has been
+            # corrected to make eyes level.
+            face_landmarks = extract_face_landmarks(image)
+
+            # Overlay facemesh on top of image
             levelled_image = apply_facemesh(image, face_landmarks)
+
+            # Display image on app
             st.image(levelled_image, caption=f'Eyes levelled')
+
     with col6:
         st.text('>')
 
-    # Calculate by how much the face is rotated (pointing left/right)
-    # This will determine how we frame the portrait to ensure *head* is
-    # centred in the frame, not the face.
-    facial_rotation = calculate_facial_rotation(image, face_landmarks)
-    # st.metric('Rotation', f'{facial_rotation:.0f}°')
-
-    # Infer parameters of head: centre and radius. The centre will be used as
-    # the focal point of the picture frame.
-    r, cx, cy, cz = parameterise_head(image, face_landmarks, facial_rotation)
-
     with col7:
-        with st.spinner(text="Inferring centre of head..."):
-            # TODO: change image to greyscale
-            #img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        with st.spinner(text="Locating centroid of head..."):
+
+            # Calculate by how much the face is rotated (pointing left/right)
+            # This will determine how we frame the portrait to ensure *head* is
+            # centred in the frame, not the face.
+            facial_rotation = calculate_facial_rotation(image, face_landmarks)
+            # st.metric('Rotation', f'{facial_rotation:.0f}°')
+
+            # Infer parameters of head: centre and radius. The centre will be used as
+            # the focal point of the picture frame.
+            r, cx, cy, cz = parameterise_head(image, face_landmarks, facial_rotation)
+
             img = image.copy()
             swap_R_and_B(img)
             img = Image.fromarray(img)
@@ -117,16 +106,13 @@ else:
             draw.line([(cx-r/3, cy-r), (cx-r/3, cy+r)], fill='#00ff00', width=2)
             draw.line([(cx+r/3, cy-r), (cx+r/3, cy+r)], fill='#00ff00', width=2)
             st.image(img, caption=f'Head centroid located')
-            pass
 
     st.success('Subject has been successfully detected!')
-
 
     # TODO: fill/blur around the edge of the image. This is important for when
     #  the mask is applied and 'null' space is left uncovered.
 
     # Show framed image on app
-    # TODO: put frame options in left column, and frame image in right column
     st.header('Now customise your frame')
     colA, colB, colC = st.columns([2,1,5])
 
@@ -141,10 +127,13 @@ else:
         # Style of frame
         PORTRAIT_STYLE = st.radio('Portrait style', ['face', 'bust'], index=0)
 
-    # Frame the image: apply a mask and crop
-    framed_img_arr = frame_head(image, r, (cx, cy, cz), FRAME_SHAPE, PORTRAIT_STYLE, EXPAND)
 
     with colC:
+
+        # Frame the image: apply a mask and crop
+        framed_img_arr = frame_head(image, r, (cx, cy, cz), FRAME_SHAPE, PORTRAIT_STYLE, EXPAND)
+
+        # Display image on app
         st.image(Image.fromarray(framed_img_arr), caption=f'{PORTRAIT_STYLE} framed in {FRAME_SHAPE}')
 
     # Option to download image
