@@ -9,25 +9,26 @@ st.title("Frame yourself")
 with st.sidebar:
 
     # Image
+    # TODO: upload image from camera.
     RAW_IMAGE_FILEPATH = st.file_uploader('Upload a photo of a single face', type=None, accept_multiple_files=False)
 
-    st.header('Frame parameters:')
-    col1, col2, col3 = st.columns([4, 3, 3])
+    # st.header('Frame parameters:')
+    # col1, col2, col3 = st.columns([4, 3, 3])
+    #
+    # with col1:
+    #     # Size of frame
+    #     EXPAND = st.number_input('Size', min_value=0.5, max_value=2.5, value=1.0, step=0.1, format='%.1f')
+    #
+    # with col2:
+    #     # Shape of frame
+    #     FRAME_SHAPE = st.radio('Frame shape', ['circle', 'oval'], index=0)
+    #
+    # with col3:
+    #     # Style of frame
+    #     PORTRAIT_STYLE = st.radio('Portrait style', ['face', 'bust'], index=0)
 
-    with col1:
-        # Size of frame
-        EXPAND = st.number_input('Size', min_value=0.5, max_value=2.5, value=1.0, step=0.1, format='%.1f')
-
-    with col2:
-        # Shape of frame
-        FRAME_SHAPE = st.radio('Frame shape', ['circle', 'oval'], index=0)
-
-    with col3:
-        # Style of frame
-        PORTRAIT_STYLE = st.radio('Portrait style', ['face', 'bust'], index=0)
-
-    # Show workings/intermediate steps
-    SHOW_WORKINGS = st.checkbox('Show workings?')
+    # # Show workings/intermediate steps
+    # SHOW_WORKINGS = st.checkbox('Show workings?')
 
 
 if RAW_IMAGE_FILEPATH is None:
@@ -44,6 +45,7 @@ else:
     #     return image, r, (cx, cy, cz)
 
     # Sequence of images showing how calculations/processing progresses
+    st.header('Subject extraction')
     col1, col2, col3, col4, col5, col6, col7 = st.columns([5,1,5,1,5,1,5])
 
     image = Image.open(RAW_IMAGE_FILEPATH)
@@ -116,15 +118,32 @@ else:
             st.image(img, caption=f'Head centre')
             pass
 
+    st.success('Subject has been successfully detected!')
+
+
     # TODO: fill/blur around the edge of the image. This is important for when
     #  the mask is applied and 'null' space is left uncovered.
+
+    # Show framed image on app
+    # TODO: put frame options in left column, and frame image in right column
+    st.header('Customise your frame')
+    colA, colB, colC = st.columns([2,1,5])
+
+    with colA:
+        # Size of frame
+        EXPAND = st.number_input('Size', min_value=0.5, max_value=2.5, value=1.0, step=0.1, format='%.1f')
+
+        # Shape of frame
+        FRAME_SHAPE = st.radio('Frame shape', ['circle', 'oval'], index=0)
+
+        # Style of frame
+        PORTRAIT_STYLE = st.radio('Portrait style', ['face', 'bust'], index=0)
 
     # Frame the image: apply a mask and crop
     framed_img_arr = frame_head(image, r, (cx, cy, cz), FRAME_SHAPE, PORTRAIT_STYLE, EXPAND)
 
-    # Show framed image on app
-    st.success('Subject has been successfully detected!')
-    st.image(Image.fromarray(framed_img_arr), caption=f'{PORTRAIT_STYLE} framed in {FRAME_SHAPE}', width=300)
+    with colC:
+        st.image(Image.fromarray(framed_img_arr), caption=f'{PORTRAIT_STYLE} framed in {FRAME_SHAPE}')
 
     # Option to download image
     os.makedirs('data/processed_images', exist_ok=True)
