@@ -36,10 +36,7 @@ if RAW_IMAGE_FILEPATH is None:
 else:
 
     # TODO: reorganise to have raw_image > face_mesh > rotated_image > centre of head. And then have the final image underneath.
-    col1, col2, col3, col4, col5, col6, col7 = st.columns([3,1,3,1,3,1,3])
-
-
-
+    col1, col2, col3, col4, col5, col6, col7 = st.columns([5,1,5,1,5,1,5])
 
     image = Image.open(RAW_IMAGE_FILEPATH)
     with col1:
@@ -67,7 +64,7 @@ else:
     # This will determine by how much to correct the image in order
     # to make the face level.
     facial_tilt = calculate_facial_tilt(image, face_landmarks)
-    st.metric('Tilt', f'{facial_tilt:.0f}°')
+    # st.metric('Tilt', f'{facial_tilt:.0f}°')
 
     # Rotate image to make eyes level.
     image = rotate_image_by_angle(image, facial_tilt)
@@ -75,19 +72,19 @@ else:
     # Re-extract the face landmarks (face mesh) now that the image has been
     # corrected to make eyes level.
     face_landmarks = extract_face_landmarks(image)
+    with col5:
+        with st.spinner(text="Leveling face..."):
+            # TODO: show image of rotated image
+            show_mesh(image, face_landmarks)
+            pass
+    with col6:
+        st.text('>')
 
     # Calculate by how much the face is rotated (pointing left/right)
     # This will determine how we frame the portrait to ensure *head* is
     # centred in the frame, not the face.
     facial_rotation = calculate_facial_rotation(image, face_landmarks)
-    with col5:
-        with st.spinner(text="Leveling face..."):
-            # TODO: show image of rotated image
-            pass
-    with col6:
-        st.text('>')
-
-    st.metric('Rotation', f'{facial_rotation:.0f}°')
+    # st.metric('Rotation', f'{facial_rotation:.0f}°')
 
     # Infer parameters of head: centre and radius. The centre will be used as
     # the focal point of the picture frame.
@@ -96,6 +93,23 @@ else:
     with col7:
         with st.spinner(text="Inferring centre of head..."):
             # TODO: add image of centre of head's location
+            #img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            img = image.copy()
+            swap_R_and_B(img)
+            img = Image.fromarray(img)
+            #image = Image.new('RGBA', (200, 200))
+            draw = ImageDraw.Draw(img)
+            #draw.ellipse((cx - r, cy - r, cx + r, cy + r), fill=None, outline='#00ff00', width=10)
+            #draw.line([(cx-r/5, cy-r/5), (cx+r/5, cy+r/5)], fill='#00ff00', width=10)
+            #draw.line([(cx-r/5, cy+r/5), (cx+r/5, cy-r/5)], fill='#00ff00', width=10)
+            draw.rectangle((cx - r, cy - r, cx + r, cy + r), fill=None, outline='#00ff00', width=10)
+            draw.line([(cx, cy-r/5), (cx, cy+r/5)], fill='#00ff00', width=10)
+            draw.line([(cx-r/5, cy), (cx+r/5, cy)], fill='#00ff00', width=10)
+            draw.line([(cx-r, cy-r/3), (cx+r, cy-r/3)], fill='#00ff00', width=2)
+            draw.line([(cx-r, cy+r/3), (cx+r, cy+r/3)], fill='#00ff00', width=2)
+            draw.line([(cx-r/3, cy-r), (cx-r/3, cy+r)], fill='#00ff00', width=2)
+            draw.line([(cx+r/3, cy-r), (cx+r/3, cy+r)], fill='#00ff00', width=2)
+            st.image(img, caption=f'Head centre')  # , width=300)
             pass
 
     # TODO: fill/blur around the edge of the image. This is important for when
@@ -108,6 +122,7 @@ else:
     framed_img_arr = frame_head(image, r, (cx, cy, cz), FRAME_SHAPE, PORTRAIT_STYLE, EXPAND)
 
     # Show framed image on app
+    st.success('Subject has successfully detected!')
     st.image(Image.fromarray(framed_img_arr), caption=f'{PORTRAIT_STYLE} framed in {FRAME_SHAPE}', width=300)
 
     # Option to download image
@@ -139,4 +154,5 @@ else:
         photo where the face is not so close to the edge
         """)
 
-    st.success('Face has been successfully framed!')
+
+    # TODO: change colours of landmarks: https://stackoverflow.com/questions/71860084/how-can-i-change-the-color-of-the-lip-that-got-its-landmarks-without-disturbing

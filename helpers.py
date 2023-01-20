@@ -350,15 +350,15 @@ def show_mesh(image, face_landmarks):
         landmark_list=face_landmarks,
         connections=mp_face_mesh.FACEMESH_TESSELATION,  # mesh of all 468 points
         landmark_drawing_spec=None,
-        connection_drawing_spec=mp_drawing_styles
-        .get_default_face_mesh_tesselation_style()
+        connection_drawing_spec=mp_drawing_styles.DrawingSpec(color=(0, 255, 0), thickness=1)
+        #connection_drawing_spec=mp_drawing_styles.get_default_face_mesh_tesselation_style()
     )
     mp_drawing.draw_landmarks(
         image=annotated_image,
         landmark_list=face_landmarks,
         connections=mp_face_mesh.FACEMESH_CONTOURS,  # outlines of facial features
         landmark_drawing_spec=None,
-        connection_drawing_spec=mp_drawing_styles
-        .get_default_face_mesh_contours_style()
+        connection_drawing_spec=mp_drawing_styles.DrawingSpec(color=(0, 255, 0), thickness=3)
+        #connection_drawing_spec=mp_drawing_styles.get_default_face_mesh_contours_style()
     )
     st.image(Image.fromarray(annotated_image), caption=f'"facemesh"')#, width=300)
