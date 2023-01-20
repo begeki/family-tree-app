@@ -1,7 +1,9 @@
-import os
-
 from helpers import *
 
+st.set_page_config(
+     page_title="Frame yourself - by begeki",
+     page_icon=":information_source:",
+ )
 st.title("Frame yourself")
 
 with st.sidebar:
@@ -68,10 +70,12 @@ else:
     # the focal point of the picture frame.
     r, cx, cy, cz = parameterise_head(image, face_landmarks, facial_rotation)
 
-    # TODO: fill/blur around the edge of the image. This is important for when the mask is applied and 'null' space is left uncovered.
+    # TODO: fill/blur around the edge of the image. This is important for when
+    #  the mask is applied and 'null' space is left uncovered.
 
     # Frame the image: apply a mask and crop
-    # TODO: when frame parameters are changed, only run script from here - the facemesh does not need to be recalculated.
+    # TODO: when frame parameters are changed, only run script from here - the
+    #  facemesh does not need to be recalculated.
     framed_img_arr = frame_head(image, r, (cx, cy, cz), FRAME_SHAPE, PORTRAIT_STYLE, EXPAND)
 
     # Show framed image on app
@@ -85,55 +89,23 @@ else:
     final_img.save(f'data/processed_images/{filename}_framed.png')
     with open(f'data/processed_images/{filename}_framed.png', "rb") as file:
         button = st.download_button(
-            label     =  'Download framed image',
-            data      =   file,
-            mime      =  'image/png',
-            file_name = f'{filename}_framed.png',
+            label='Download framed image',
+            data=file,
+            mime='image/png',
+            file_name=f'{filename}_framed.png',
         )
 
     # Warn user if there are 'null' values in the framed image
     null_pixels_flag = False
     for i in range(0, len(framed_img_arr)):
         for j in range(0, len(framed_img_arr[0])):
-            if framed_img_arr[i][j][:3].sum() == 0 and framed_img_arr[i][j][3].sum() == 255:  # if 1) colour is black and 2) within the frame
+            if framed_img_arr[i][j][:3].sum() == 0\
+                    and framed_img_arr[i][j][3].sum() == 255:  # if 1) colour is black and 2) within the frame
                 null_pixels_flag = True
                 break
-    if null_pixels_flag == True:
-        st.warning(":warning: Frame includes 'null' pixels. You may want to:\n * make the frame smaller using the options in the sidebar\n * use a different photo where the face is not so close to the edge")
-
-    # st.image(framed_img_arr, caption='Sunrise by the mountains', channels='RGB')
-    # imageRGB = cv2.cvtColor(framed_img_arr, cv2.COLOR_BGR2RGB)
-    # st.image(imageRGB, caption='Sunrise by the mountains')
-    # img = Image.fromarray(imageRGB)
-    # st.image(img, caption='Sunrise by the mountains')
-
-    #img.save('fromArray.jpg')
-
-
-
-    # @st.cache
-    # def load_data(nrows):
-    #     data = pd.read_csv(DATA_URL, nrows=nrows)
-    #     lowercase = lambda x: str(x).lower()
-    #     data.rename(lowercase, axis='columns', inplace=True)
-    #     data[DATE_COLUMN] = pd.to_datetime(data[DATE_COLUMN])
-    #     return data
-    #
-    # data_load_state = st.text('Loading data...')
-    # data = load_data(10000)
-    # data_load_state.text("Done! (using st.cache)")
-    #
-    # if st.checkbox('Show raw data'):
-    #     st.subheader('Raw data')
-    #     st.write(data)
-    #
-    # st.subheader('Number of pickups by hour')
-    # hist_values = np.histogram(data[DATE_COLUMN].dt.hour, bins=24, range=(0,24))[0]
-    # st.bar_chart(hist_values)
-    #
-    # # Some number in the range 0-23
-    # hour_to_filter = st.slider('hour', 0, 23, 17)
-    # filtered_data = data[data[DATE_COLUMN].dt.hour == hour_to_filter]
-    #
-    # st.subheader('Map of all pickups at %s:00' % hour_to_filter)
-    # st.map(filtered_data)
+    if null_pixels_flag is True:
+        st.warning("""
+        :warning: Frame includes 'null' pixels. You may want to:\n * make the \
+        frame smaller using the options in the sidebar\n * use a different \
+        photo where the face is not so close to the edge
+        """)
