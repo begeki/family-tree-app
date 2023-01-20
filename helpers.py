@@ -334,7 +334,7 @@ def frame_head(image, r, centre_head, frame_shape='circle', portrait_style='face
     return framed_img_arr
 
 
-def show_mesh(image, face_landmarks):
+def apply_facemesh(image, face_landmarks):
     """
     """
     mp_drawing = mp.solutions.drawing_utils
@@ -358,7 +358,7 @@ def show_mesh(image, face_landmarks):
         landmark_list=face_landmarks,
         connections=mp_face_mesh.FACEMESH_CONTOURS,  # outlines of facial features
         landmark_drawing_spec=None,
-        connection_drawing_spec=mp_drawing_styles.DrawingSpec(color=(0, 255, 0), thickness=3)
+        connection_drawing_spec=mp_drawing_styles.DrawingSpec(color=(0, 255, 0), thickness=2)
         #connection_drawing_spec=mp_drawing_styles.get_default_face_mesh_contours_style()
     )
-    st.image(Image.fromarray(annotated_image), caption=f'"facemesh"')#, width=300)
+    return Image.fromarray(annotated_image)

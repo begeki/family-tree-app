@@ -45,12 +45,12 @@ else:
     #     return image, r, (cx, cy, cz)
 
     # Sequence of images showing how calculations/processing progresses
-    st.header('Subject extraction')
+    st.header('Face detection')
     col1, col2, col3, col4, col5, col6, col7 = st.columns([5,1,5,1,5,1,5])
 
     image = Image.open(RAW_IMAGE_FILEPATH)
     with col1:
-        st.image(image, caption=f'Input')
+        st.image(image, caption=f'Image uploaded')
 
     with col2:
         st.text('>')
@@ -66,7 +66,8 @@ else:
     with col3:
         with st.spinner(text="Detecting face..."):
             # TODO: change image to greyscale
-            show_mesh(image, face_landmarks)
+            detected_face_image = apply_facemesh(image, face_landmarks)
+            st.image(detected_face_image, caption=f'Face detected')
     with col4:
         st.text('>')
 
@@ -85,8 +86,8 @@ else:
     with col5:
         with st.spinner(text="Leveling face..."):
             # TODO: change image to greyscale
-            show_mesh(image, face_landmarks)
-            pass
+            levelled_image = apply_facemesh(image, face_landmarks)
+            st.image(levelled_image, caption=f'Eyes levelled')
     with col6:
         st.text('>')
 
@@ -115,7 +116,7 @@ else:
             draw.line([(cx-r, cy+r/3), (cx+r, cy+r/3)], fill='#00ff00', width=2)
             draw.line([(cx-r/3, cy-r), (cx-r/3, cy+r)], fill='#00ff00', width=2)
             draw.line([(cx+r/3, cy-r), (cx+r/3, cy+r)], fill='#00ff00', width=2)
-            st.image(img, caption=f'Head centre')
+            st.image(img, caption=f'Head centroid located')
             pass
 
     st.success('Subject has been successfully detected!')
@@ -126,10 +127,11 @@ else:
 
     # Show framed image on app
     # TODO: put frame options in left column, and frame image in right column
-    st.header('Customise your frame')
+    st.header('Now customise your frame')
     colA, colB, colC = st.columns([2,1,5])
 
     with colA:
+
         # Size of frame
         EXPAND = st.number_input('Size', min_value=0.5, max_value=2.5, value=1.0, step=0.1, format='%.1f')
 
