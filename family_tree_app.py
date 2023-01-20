@@ -1,8 +1,8 @@
 from helpers import *
 
 st.set_page_config(
-     page_title="Frame yourself - by begeki",
-     page_icon=":information_source:",
+     page_title="Frame yourself | @begeki",
+     page_icon=":mirror:",
  )
 st.title("Frame yourself")
 
@@ -34,8 +34,19 @@ if RAW_IMAGE_FILEPATH is None:
     st.info(':information_source: Upload a photo containing a single face using the sidebar.')
 
 else:
+
+    # TODO: reorganise to have raw_image > face_mesh > rotated_image > centre of head. And then have the final image underneath.
+    col1, col2, col3, col4, col5, col6, col7 = st.columns([3,1,3,1,3,1,3])
+
+
+
+
     image = Image.open(RAW_IMAGE_FILEPATH)
-    st.image(image, caption=f'Raw image: {RAW_IMAGE_FILEPATH.name}', width=300)
+    with col1:
+        st.image(image, caption=f'Input')#, width=300)
+
+    with col2:
+        st.text('>')
 
     # Read image
     image = np.asarray(image)
@@ -45,7 +56,12 @@ else:
     # Extract the face landmarks (face mesh)
     face_landmarks = extract_face_landmarks(image)
 
-    show_mesh(image, face_landmarks)
+    with col3:
+        with st.spinner(text="Detecting face..."):
+            # TODO: change image to greyscale, and make facemesh more prominent (green?)
+            show_mesh(image, face_landmarks)
+    with col4:
+        st.text('>')
 
     # Calculate by how much the face is tilted (leaning left/right).
     # This will determine by how much to correct the image in order
@@ -64,18 +80,31 @@ else:
     # This will determine how we frame the portrait to ensure *head* is
     # centred in the frame, not the face.
     facial_rotation = calculate_facial_rotation(image, face_landmarks)
+    with col5:
+        with st.spinner(text="Leveling face..."):
+            # TODO: show image of rotated image
+            pass
+    with col6:
+        st.text('>')
+
     st.metric('Rotation', f'{facial_rotation:.0f}°')
 
     # Infer parameters of head: centre and radius. The centre will be used as
     # the focal point of the picture frame.
     r, cx, cy, cz = parameterise_head(image, face_landmarks, facial_rotation)
 
+    with col7:
+        with st.spinner(text="Inferring centre of head..."):
+            # TODO: add image of centre of head's location
+            pass
+
     # TODO: fill/blur around the edge of the image. This is important for when
     #  the mask is applied and 'null' space is left uncovered.
 
     # Frame the image: apply a mask and crop
     # TODO: when frame parameters are changed, only run script from here - the
-    #  facemesh does not need to be recalculated.
+    #  facemesh does not need to be recalculated. For further details, see:
+    #  https://docs.streamlit.io/library/api-reference/performance
     framed_img_arr = frame_head(image, r, (cx, cy, cz), FRAME_SHAPE, PORTRAIT_STYLE, EXPAND)
 
     # Show framed image on app
@@ -109,3 +138,5 @@ else:
         frame smaller using the options in the sidebar\n * use a different \
         photo where the face is not so close to the edge
         """)
+
+    st.success('Face has been successfully framed!')

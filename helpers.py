@@ -361,4 +361,4 @@ def show_mesh(image, face_landmarks):
         connection_drawing_spec=mp_drawing_styles
         .get_default_face_mesh_contours_style()
     )
-    st.image(Image.fromarray(annotated_image), caption=f'Detected "facemesh"', width=300)
+    st.image(Image.fromarray(annotated_image), caption=f'"facemesh"')#, width=300)
