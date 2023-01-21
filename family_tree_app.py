@@ -6,6 +6,50 @@ st.set_page_config(
  )
 st.title("Frame yourself")
 
+@st.cache
+def read_image(RAW_IMAGE_FILEPATH):
+    image = Image.open(RAW_IMAGE_FILEPATH)
+    return image
+
+
+@st.cache
+def detect_face(image):
+
+    # Read image
+    image = np.asarray(image)
+    image = image.copy()
+    swap_R_and_B(image)
+
+    # Extract the face landmarks (face mesh)
+    face_landmarks = extract_face_landmarks(image)
+
+    # Overlay facemesh on top of image
+    detected_face_image = apply_facemesh(image, face_landmarks)
+
+    return image, face_landmarks, detected_face_image
+
+
+@st.cache
+def level_face(image, face_landmarks):
+    # Calculate by how much the face is tilted (leaning left/right).
+    # This will determine by how much to correct the image in order
+    # to make the face level.
+    facial_tilt = calculate_facial_tilt(image, face_landmarks)
+    # st.metric('Tilt', f'{facial_tilt:.0f}°')
+
+    # Rotate image to make eyes level.
+    image = rotate_image_by_angle(image, facial_tilt)
+
+    # Re-extract the face landmarks (face mesh) now that the image has been
+    # corrected to make eyes level.
+    face_landmarks = extract_face_landmarks(image)
+
+    # Overlay facemesh on top of image
+    levelled_image = apply_facemesh(image, face_landmarks)
+
+    return image, levelled_image
+
+
 with st.sidebar:
 
     # Image
@@ -29,26 +73,27 @@ else:
     st.header('Face detection')
     col1, col2, col3, col4, col5, col6, col7 = st.columns([5,1,5,1,5,1,5])
 
-    image = Image.open(RAW_IMAGE_FILEPATH)
     with col1:
+
+        # Read image
+        image = read_image(RAW_IMAGE_FILEPATH)
+
+        # Display image on app
         st.image(image, caption=f'Image uploaded')
 
     with col2:
         st.text('>')
 
-    # Read image
-    image = np.asarray(image)
-    image = image.copy()
-    swap_R_and_B(image)
+    # # Read image
+    # image = np.asarray(image)
+    # image = image.copy()
+    # swap_R_and_B(image)
 
     with col3:
         with st.spinner(text="Detecting face..."):
 
-            # Extract the face landmarks (face mesh)
-            face_landmarks = extract_face_landmarks(image)
-
-            # Overlay facemesh on top of image
-            detected_face_image = apply_facemesh(image, face_landmarks)
+            # Detect face
+            image, face_landmarks, detected_face_image = detect_face(image)
 
             # Display image on app
             st.image(detected_face_image, caption=f'Face detected')
@@ -59,21 +104,8 @@ else:
     with col5:
         with st.spinner(text="Leveling face..."):
 
-            # Calculate by how much the face is tilted (leaning left/right).
-            # This will determine by how much to correct the image in order
-            # to make the face level.
-            facial_tilt = calculate_facial_tilt(image, face_landmarks)
-            # st.metric('Tilt', f'{facial_tilt:.0f}°')
-
-            # Rotate image to make eyes level.
-            image = rotate_image_by_angle(image, facial_tilt)
-
-            # Re-extract the face landmarks (face mesh) now that the image has been
-            # corrected to make eyes level.
-            face_landmarks = extract_face_landmarks(image)
-
-            # Overlay facemesh on top of image
-            levelled_image = apply_facemesh(image, face_landmarks)
+            # Make the face level
+            image, levelled_image = level_face(image, face_landmarks)
 
             # Display image on app
             st.image(levelled_image, caption=f'Eyes levelled')
