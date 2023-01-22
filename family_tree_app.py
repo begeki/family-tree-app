@@ -31,6 +31,7 @@ def detect_face(image):
 
 @st.cache(show_spinner=False)
 def level_face(image, face_landmarks):
+
     # Calculate by how much the face is tilted (leaning left/right).
     # This will determine by how much to correct the image in order
     # to make the face level.
@@ -50,6 +51,34 @@ def level_face(image, face_landmarks):
     return image, face_landmarks, levelled_image
 
 
+@st.cache(show_spinner=False)
+def locate_head_controid(image, face_landmarks):
+
+    # Calculate by how much the face is rotated (pointing left/right)
+    # This will determine how we frame the portrait to ensure *head* is
+    # centred in the frame, not the face.
+    facial_rotation = calculate_facial_rotation(image, face_landmarks)
+    # st.metric('Rotation', f'{facial_rotation:.0f}°')
+
+    # Infer parameters of head: centre and radius. The centre will be used as
+    # the focal point of the picture frame.
+    r, cx, cy, cz = parameterise_head(image, face_landmarks, facial_rotation)
+
+    img = image.copy()
+    swap_R_and_B(img)
+    img = Image.fromarray(img)
+    draw = ImageDraw.Draw(img)
+    draw.rectangle((cx - r, cy - r, cx + r, cy + r), fill=None, outline='#00ff00', width=10)
+    draw.line([(cx, cy - r / 5), (cx, cy + r / 5)], fill='#00ff00', width=10)
+    draw.line([(cx - r / 5, cy), (cx + r / 5, cy)], fill='#00ff00', width=10)
+    draw.line([(cx - r, cy - r / 3), (cx + r, cy - r / 3)], fill='#00ff00', width=2)
+    draw.line([(cx - r, cy + r / 3), (cx + r, cy + r / 3)], fill='#00ff00', width=2)
+    draw.line([(cx - r / 3, cy - r), (cx - r / 3, cy + r)], fill='#00ff00', width=2)
+    draw.line([(cx + r / 3, cy - r), (cx + r / 3, cy + r)], fill='#00ff00', width=2)
+
+    return image, img, r, cx, cy, cz
+
+
 with st.sidebar:
 
     # Image
@@ -60,14 +89,6 @@ if RAW_IMAGE_FILEPATH is None:
     st.info(':information_source: Upload a photo containing a single face using the sidebar.')
 
 else:
-
-    # TODO: if input image has been processed, it does not need to be re-processed whenever frame parameters are
-    #  changed. Ensure that col1, col2, col3, etc. can still be populated, despite these processes running within
-    #  a decorated function.
-    # @st.cache
-    # def process_input_image(image):
-    #     # run all processes up to (but not including) when image is framed
-    #     return image, r, (cx, cy, cz)
 
     # Sequence of images showing how calculations/processing progresses
     st.header('Face detection')
@@ -83,11 +104,6 @@ else:
 
     with col2:
         st.text('>')
-
-    # # Read image
-    # image = np.asarray(image)
-    # image = image.copy()
-    # swap_R_and_B(image)
 
     with col3:
         with st.spinner(text="Detecting face..."):
@@ -116,27 +132,10 @@ else:
     with col7:
         with st.spinner(text="Locating centroid of head..."):
 
-            # Calculate by how much the face is rotated (pointing left/right)
-            # This will determine how we frame the portrait to ensure *head* is
-            # centred in the frame, not the face.
-            facial_rotation = calculate_facial_rotation(image, face_landmarks)
-            # st.metric('Rotation', f'{facial_rotation:.0f}°')
+            # Locate centroid of head
+            image, img, r, cx, cy, cz = locate_head_controid(image, face_landmarks)
 
-            # Infer parameters of head: centre and radius. The centre will be used as
-            # the focal point of the picture frame.
-            r, cx, cy, cz = parameterise_head(image, face_landmarks, facial_rotation)
-
-            img = image.copy()
-            swap_R_and_B(img)
-            img = Image.fromarray(img)
-            draw = ImageDraw.Draw(img)
-            draw.rectangle((cx - r, cy - r, cx + r, cy + r), fill=None, outline='#00ff00', width=10)
-            draw.line([(cx, cy-r/5), (cx, cy+r/5)], fill='#00ff00', width=10)
-            draw.line([(cx-r/5, cy), (cx+r/5, cy)], fill='#00ff00', width=10)
-            draw.line([(cx-r, cy-r/3), (cx+r, cy-r/3)], fill='#00ff00', width=2)
-            draw.line([(cx-r, cy+r/3), (cx+r, cy+r/3)], fill='#00ff00', width=2)
-            draw.line([(cx-r/3, cy-r), (cx-r/3, cy+r)], fill='#00ff00', width=2)
-            draw.line([(cx+r/3, cy-r), (cx+r/3, cy+r)], fill='#00ff00', width=2)
+            # Display image on app
             st.image(img, caption=f'Head centroid located')
 
     st.success('Subject has been successfully detected!')
@@ -158,7 +157,6 @@ else:
 
         # Style of frame
         PORTRAIT_STYLE = st.radio('Portrait style', ['face', 'bust'], index=0)
-
 
     with colC:
 
