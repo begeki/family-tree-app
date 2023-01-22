@@ -6,13 +6,13 @@ st.set_page_config(
  )
 st.title("Frame yourself")
 
-@st.cache
+@st.cache(show_spinner=False)
 def read_image(RAW_IMAGE_FILEPATH):
     image = Image.open(RAW_IMAGE_FILEPATH)
     return image
 
 
-@st.cache
+@st.cache(show_spinner=False)
 def detect_face(image):
 
     # Read image
@@ -29,7 +29,7 @@ def detect_face(image):
     return image, face_landmarks, detected_face_image
 
 
-@st.cache
+@st.cache(show_spinner=False)
 def level_face(image, face_landmarks):
     # Calculate by how much the face is tilted (leaning left/right).
     # This will determine by how much to correct the image in order
