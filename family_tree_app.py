@@ -47,7 +47,7 @@ def level_face(image, face_landmarks):
     # Overlay facemesh on top of image
     levelled_image = apply_facemesh(image, face_landmarks)
 
-    return image, levelled_image
+    return image, face_landmarks, levelled_image
 
 
 with st.sidebar:
@@ -105,7 +105,7 @@ else:
         with st.spinner(text="Leveling face..."):
 
             # Make the face level
-            image, levelled_image = level_face(image, face_landmarks)
+            image, face_landmarks, levelled_image = level_face(image, face_landmarks)
 
             # Display image on app
             st.image(levelled_image, caption=f'Eyes levelled')
