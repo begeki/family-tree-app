@@ -3,6 +3,7 @@ from helpers import *
 st.set_page_config(
      page_title="Frame yourself | @begeki",
      page_icon=":mirror:",
+     layout='wide',
  )
 st.title("Frame yourself")
 
@@ -190,8 +191,8 @@ else:
                 break
     if null_pixels_flag is True:
         st.warning("""
-        :warning: Frame includes 'null' pixels (i.e., pixels that were off \
-        the edge of the original image). You may want to:\n * make the \
+        :warning: Frame includes pixels that were off \
+        the edge of the original image. You may want to:\n * make the \
         frame smaller using the options in the sidebar\n * use a different \
         photo where the face is not so close to the edge
         """)
